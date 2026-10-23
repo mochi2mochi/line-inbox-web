@@ -231,6 +231,7 @@
     }
     $('reply-form').hidden = false;
     $('reply-note').textContent = `${c.account.name} から送信されます`;
+    $('call-link-button').hidden = !c.account.has_call; // 通話URLを登録した公式LINEだけ表示
     $('reply-error').textContent = '';
     await guarded(loadMessages);
   }
@@ -265,26 +266,35 @@
     line_send_failed: 'LINEへの送信に失敗しました。相手がブロックしている可能性があります。',
     sent_but_not_saved: '送信はできましたが、履歴への記録に失敗しました。もう一度送らないでください。',
     not_found: 'この相手は見つかりませんでした。一覧を更新してください。',
+    call_not_configured: 'この公式LINEには通話リンクが登録されていません。',
   };
 
   async function sendReply() {
-    const textarea = $('reply-text');
-    const text = textarea.value.trim();
+    const text = $('reply-text').value.trim();
     if (!text || !state.contactId) return;
-    const button = $('reply-button');
-    button.disabled = true;
+    await send(`/contacts/${encodeURIComponent(state.contactId)}/messages`, { text }, true);
+  }
+
+  // 通話リンク：文面とURLはサーバー側で決まる。誤送信を防ぐため送信前に確認する
+  async function sendCallLink() {
+    if (!state.contactId) return;
+    if (!window.confirm('この相手にLINE通話のリンクを送信しますか？')) return;
+    await send(`/contacts/${encodeURIComponent(state.contactId)}/call-link`, {}, false);
+  }
+
+  async function send(path, body, clearText) {
+    const textarea = $('reply-text');
+    const buttons = [$('reply-button'), $('call-link-button')];
+    buttons.forEach((b) => (b.disabled = true));
     $('reply-error').textContent = '';
     try {
-      const { status, data } = await apiRequest(`/contacts/${encodeURIComponent(state.contactId)}/messages`, {
-        method: 'POST',
-        body: { text },
-      });
+      const { status, data } = await apiRequest(path, { method: 'POST', body });
       if (status === 200) {
-        textarea.value = '';
+        if (clearText) textarea.value = '';
         $('reply-note').textContent = data.method === 'reply' ? '無料の返信で送信しました' : '送信しました（今月の送信数に1通加算）';
       } else {
         $('reply-error').textContent = REPLY_ERRORS[data.error] ?? '送信できませんでした。時間をおいて再度お試しください。';
-        if (data.error === 'sent_but_not_saved') textarea.value = '';
+        if (data.error === 'sent_but_not_saved' && clearText) textarea.value = '';
       }
       await refresh();
     } catch (e) {
@@ -292,7 +302,7 @@
         $('reply-error').textContent = '通信に失敗しました。送信されたか履歴を確認してから再度お試しください。';
       }
     } finally {
-      button.disabled = false;
+      buttons.forEach((b) => (b.disabled = false));
     }
   }
 
@@ -345,6 +355,7 @@
     e.preventDefault();
     sendReply();
   });
+  $('call-link-button').addEventListener('click', sendCallLink);
   $('reply-text').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
