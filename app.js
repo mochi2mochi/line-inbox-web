@@ -293,6 +293,7 @@
       box.append(img);
       showImage(m.id, img);
       img.addEventListener('click', () => img.src && window.open(img.src, '_blank', 'noopener'));
+      box.append(actionButton('ダウンロード', () => openFile(m.id, box, true)));
     } else if (status === 'stored') {
       box.append(actionButton('ダウンロードして開く', () => openFile(m.id, box)));
     } else if (status === 'pending' || status === 'failed') {
@@ -340,9 +341,10 @@
     }
   }
 
-  async function openFile(messageId, box) {
+  async function openFile(messageId, box, forDownload = false) {
     try {
-      const { status, data } = await apiRequest(`/messages/${encodeURIComponent(messageId)}/media`);
+      const query = forDownload ? '?download=1' : '';
+      const { status, data } = await apiRequest(`/messages/${encodeURIComponent(messageId)}/media${query}`);
       if (status !== 200) throw new Error('media');
       // 一時リンク（60秒で失効）をダウンロードとして開く
       const a = document.createElement('a');
