@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 読み込めるのはこのサイト自身のファイルと Supabase への通信だけ（不正なスクリプトの実行を防ぐ） -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://profile.line-scdn.net; connect-src https://zcqwmadgspmriezwesef.supabase.co; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>LINE受信箱</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ログイン画面 -->
+  <main id="login-view" class="login" hidden>
+    <form id="login-form" class="card" autocomplete="on">
+      <h1>LINE受信箱</h1>
+      <label>メールアドレス
+        <input id="login-email" type="email" autocomplete="username" required>
+      </label>
+      <label>パスワード
+        <input id="login-password" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">ログイン</button>
+      <p id="login-error" class="error" role="alert"></p>
+    </form>
+  </main>
+
+  <!-- 受信箱 -->
+  <div id="inbox-view" class="inbox" hidden>
+    <header class="topbar">
+      <strong>LINE受信箱</strong>
+      <!-- 全公式LINEをまとめて表示。必要なときだけ絞り込む（切り替えではない） -->
+      <select id="account-filter" aria-label="公式LINEで絞り込み">
+        <option value="">すべての公式LINE</option>
+      </select>
+      <span class="spacer"></span>
+      <span id="usage" class="muted" title="今月の送信数（無料の返信は数えません）"></span>
+      <button id="refresh-button" type="button" class="secondary">更新</button>
+      <span id="user-email" class="muted"></span>
+      <button id="logout-button" type="button" class="secondary">ログアウト</button>
+    </header>
+    <div class="panes">
+      <nav class="contacts" aria-label="相手の一覧">
+        <ul id="contact-list"></ul>
+        <p id="contacts-empty" class="muted pad" hidden>まだメッセージはありません</p>
+      </nav>
+      <section class="thread" aria-live="polite">
+        <header class="thread-title">
+          <h2 id="thread-title">相手を選んでください</h2>
+          <span id="thread-account" class="badge" hidden></span>
+        </header>
+        <ol id="message-list" class="messages"></ol>
+        <form id="reply-form" class="composer" hidden>
+          <textarea id="reply-text" rows="3" maxlength="5000" placeholder="返信を入力（Ctrl+Enter で送信）" aria-label="返信"></textarea>
+          <div class="composer-actions">
+            <span id="reply-note" class="muted"></span>
+            <button id="reply-button" type="submit">送信</button>
+          </div>
+          <p id="reply-error" class="error" role="alert"></p>
+        </form>
+      </section>
+    </div>
+    <p id="inbox-error" class="error pad" role="alert"></p>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
