@@ -10,7 +10,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>LINE受信箱</title>
   <!-- ?v= は更新のたびに変える（ブラウザに古いファイルを使わせないため） -->
-  <link rel="stylesheet" href="style.css?v=20261023-2">
+  <link rel="stylesheet" href="style.css?v=20261023-3">
 </head>
 <body>
   <!-- ログイン画面 -->
@@ -41,6 +41,8 @@
       <button id="refresh-button" type="button" class="secondary">更新</button>
       <span id="user-email" class="muted"></span>
       <button id="logout-button" type="button" class="secondary">ログアウト</button>
+      <!-- 画面の版。index.html の ?v= と同じ番号にする（問い合わせのときに、どの版の画面かを確かめるため） -->
+      <span class="muted small" title="画面の版">版 10/23-3</span>
     </header>
     <div class="panes">
       <nav class="contacts" aria-label="相手の一覧">
@@ -140,7 +142,7 @@
     <p id="inbox-error" class="error pad" role="alert"></p>
   </div>
 
-  <script src="config.js?v=20261023-2"></script>
-  <script src="app.js?v=20261023-2"></script>
+  <script src="config.js?v=20261023-3"></script>
+  <script src="app.js?v=20261023-3"></script>
 </body>
 </html>
