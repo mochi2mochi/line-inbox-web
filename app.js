@@ -14,13 +14,17 @@
   const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = window.LINE_INBOX_CONFIG;
   const API = `${SUPABASE_URL}/functions/v1/admin-api`;
   const SESSION_KEY = 'line-inbox-session';
-  const POLL_MS = 60_000;
+  // 新着の確認は15秒ごと（画面を見ているときだけ）。送信数は LINE への問い合わせを伴うため5分ごと
+  const POLL_MS = 15_000;
+  const USAGE_MS = 5 * 60_000;
 
   const $ = (id) => document.getElementById(id);
   const state = {
     session: null, accounts: [], contacts: [], filter: '', tab: 'todo', contactId: null, pollTimer: null,
     templates: [], editingTemplateId: null,
     images: new Map(), // 表示済みの画像（メッセージID → このタブの中だけで使う一時URL）
+    usageLoadedAt: 0,
+    refreshing: false,
   };
 
   // ---------- ログイン情報の保存（このタブの中だけ） ----------
@@ -460,15 +464,27 @@
     }
   }
 
-  async function refresh() {
-    await guarded(async () => {
-      await loadContacts();
-      const c = currentContact();
-      if (c) renderThreadHeader(c);
-      await loadMessages();
-      await loadUsage();
-    });
+  // usage：今月の送信数も読み直すか（自動更新では5分に1回だけ）
+  async function refresh({ usage = true } = {}) {
+    if (state.refreshing) return; // 前回の読み込みが終わっていなければ重ねない
+    state.refreshing = true;
+    try {
+      await guarded(async () => {
+        await loadContacts();
+        const c = currentContact();
+        if (c) renderThreadHeader(c);
+        await loadMessages();
+        if (usage) {
+          await loadUsage();
+          state.usageLoadedAt = Date.now();
+        }
+      });
+    } finally {
+      state.refreshing = false;
+    }
   }
+
+  const autoRefresh = () => refresh({ usage: Date.now() - state.usageLoadedAt > USAGE_MS });
 
   // ---------- 今月の送信数 ----------
   async function loadUsage() {
@@ -546,7 +562,7 @@
   function startPolling() {
     stopPolling();
     state.pollTimer = setInterval(() => {
-      if (document.visibilityState === 'visible') refresh();
+      if (document.visibilityState === 'visible') autoRefresh();
     }, POLL_MS);
   }
   function stopPolling() {
@@ -691,7 +707,11 @@
   });
 
   $('logout-button').addEventListener('click', logout);
-  $('refresh-button').addEventListener('click', refresh);
+  // 別のタブやアプリから戻ってきたら、すぐに新着を確認する
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.pollTimer) autoRefresh();
+  });
+  $('refresh-button').addEventListener('click', () => refresh());
   $('reply-form').addEventListener('submit', (e) => {
     e.preventDefault();
     sendReply();
