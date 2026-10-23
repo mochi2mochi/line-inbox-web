@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- 読み込めるのはこのサイト自身のファイルと Supabase への通信だけ（不正なスクリプトの実行を防ぐ） -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://profile.line-scdn.net https://sprofile.line-scdn.net https://obs.line-scdn.net; connect-src https://zcqwmadgspmriezwesef.supabase.co; base-uri 'none'; form-action 'none'">
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://profile.line-scdn.net https://sprofile.line-scdn.net https://obs.line-scdn.net; connect-src https://zcqwmadgspmriezwesef.supabase.co; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>LINE受信箱</title>
@@ -43,18 +43,91 @@
     </header>
     <div class="panes">
       <nav class="contacts" aria-label="相手の一覧">
+        <!-- 要対応 = 未返信 または フォロー中。このタブを空にすることを目標にする -->
+        <div class="list-tabs">
+          <button id="tab-todo" type="button" class="tab" aria-pressed="true">要対応 <span id="todo-count"></span></button>
+          <button id="tab-all" type="button" class="tab" aria-pressed="false">すべて</button>
+        </div>
         <ul id="contact-list"></ul>
         <p id="contacts-empty" class="muted pad" hidden>まだメッセージはありません</p>
       </nav>
       <section class="thread" aria-live="polite">
         <header class="thread-title">
           <h2 id="thread-title">相手を選んでください</h2>
+          <span id="thread-line-name" class="muted small"></span>
           <span id="thread-account" class="badge" hidden></span>
+          <span class="spacer"></span>
+          <span id="thread-actions" class="thread-actions" hidden>
+            <button id="follow-button" type="button" class="secondary small">📌 フォロー</button>
+            <button id="done-button" type="button" class="secondary small" title="返信せずに「未返信」を解除します">✓ 返信不要</button>
+            <button id="profile-button" type="button" class="secondary small">✎ メモ</button>
+          </span>
         </header>
+        <div id="contact-info" class="contact-info" hidden>
+          <p id="info-follow" class="tag follow" hidden></p>
+          <p id="info-memo" class="memo" hidden></p>
+        </div>
+        <form id="follow-form" class="inline-form" hidden>
+          <label>フォローの内容
+            <input id="follow-note" maxlength="200" placeholder="求人票を送る" required>
+          </label>
+          <label>期限（任意）
+            <input id="follow-due" type="date">
+          </label>
+          <div class="form-actions">
+            <button id="follow-clear" type="button" class="secondary">完了にする</button>
+            <span class="spacer"></span>
+            <button id="follow-cancel" type="button" class="secondary">キャンセル</button>
+            <button type="submit">保存</button>
+          </div>
+        </form>
+        <form id="profile-form" class="inline-form" hidden>
+          <label>呼び名（本名など）
+            <input id="profile-name" maxlength="50" placeholder="山田 太郎">
+          </label>
+          <label>メモ
+            <textarea id="profile-memo" maxlength="1000" rows="3" placeholder="事務職希望／10/30 面談済"></textarea>
+          </label>
+          <div class="form-actions">
+            <span class="spacer"></span>
+            <button id="profile-cancel" type="button" class="secondary">キャンセル</button>
+            <button type="submit">保存</button>
+          </div>
+        </form>
+        <p id="action-error" class="error pad-x" role="alert"></p>
         <ol id="message-list" class="messages"></ol>
+        <!-- 定型文：選ぶと入力欄に差し込むだけ（そのまま送信はしない） -->
+        <div id="template-panel" class="template-panel" hidden>
+          <div class="template-toolbar">
+            <input id="template-search" type="search" placeholder="定型文を検索" aria-label="定型文を検索">
+            <button id="template-add" type="button" class="secondary small">＋ 追加</button>
+            <button id="template-close" type="button" class="secondary small">閉じる</button>
+          </div>
+          <ul id="template-list" class="template-list"></ul>
+          <p id="template-empty" class="muted small" hidden>定型文はまだありません。「＋ 追加」から登録できます。</p>
+          <form id="template-form" class="template-form" hidden>
+            <label>題名
+              <input id="template-title" maxlength="50" placeholder="面接日程の確認" required>
+            </label>
+            <label>本文 <span class="muted small">（{名前} は相手の名前に置き換わります）</span>
+              <textarea id="template-body" maxlength="5000" rows="4" required></textarea>
+            </label>
+            <label>使う公式LINE
+              <select id="template-account"></select>
+            </label>
+            <div class="form-actions">
+              <button id="template-delete" type="button" class="secondary danger">削除</button>
+              <span class="spacer"></span>
+              <button id="template-cancel" type="button" class="secondary">キャンセル</button>
+              <button type="submit">保存</button>
+            </div>
+          </form>
+          <p id="template-error" class="error small" role="alert"></p>
+        </div>
         <form id="reply-form" class="composer" hidden>
           <textarea id="reply-text" rows="3" maxlength="5000" placeholder="返信を入力（Ctrl+Enter で送信）" aria-label="返信"></textarea>
           <div class="composer-actions">
+            <button id="template-button" type="button" class="secondary small">📄 定型文</button>
             <span id="reply-note" class="muted"></span>
             <button id="call-link-button" type="button" class="secondary" hidden>📞 通話リンクを送る</button>
             <button id="reply-button" type="submit">送信</button>

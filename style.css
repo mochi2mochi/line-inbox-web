@@ -10,6 +10,10 @@
   --bubble-out: #d9f8e3;
   --selected: #eaf7ef;
   --error: #c62828;
+  --waiting-bg: #fdecea;
+  --waiting-text: #a31515;
+  --follow-bg: #fff4d6;
+  --follow-text: #7a5300;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -22,6 +26,10 @@
     --bubble-out: #1f4d33;
     --selected: #23382b;
     --error: #ef9a9a;
+    --waiting-bg: #4a1f1f;
+    --waiting-text: #ffb4ab;
+    --follow-bg: #45360f;
+    --follow-text: #ffd97a;
   }
 }
 
@@ -100,7 +108,7 @@ input, select {
   padding: 10px 14px;
   display: grid;
   grid-template-columns: 40px 1fr auto;
-  grid-template-rows: auto auto;
+  grid-template-rows: auto auto auto;
   column-gap: 10px;
   row-gap: 2px;
   align-items: center;
@@ -172,3 +180,60 @@ input, select {
   .contacts { border-right: 0; border-bottom: 1px solid var(--border); }
   #user-email { display: none; }
 }
+
+/* 要対応タブ */
+.list-tabs { display: flex; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.tab { background: transparent; color: var(--muted); padding: 5px 12px; font-size: 13px; }
+.tab[aria-pressed="true"] { background: var(--selected); color: var(--text); font-weight: 600; }
+
+/* 未返信・フォローの印 */
+.contacts .tags { grid-column: 2 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11px; line-height: 1; padding: 4px 6px; border-radius: 6px; white-space: nowrap; margin: 0; }
+.tag.waiting { background: var(--waiting-bg); color: var(--waiting-text); }
+.tag.follow { background: var(--follow-bg); color: var(--follow-text); }
+.tag.overdue { background: var(--waiting-bg); color: var(--waiting-text); }
+.contacts .sub { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+/* 相手の情報・操作 */
+.small { font-size: 12px; }
+button.small { padding: 5px 10px; }
+.thread-title .spacer { flex: 1; }
+.thread-title { flex-wrap: wrap; }
+.thread-actions { display: flex; gap: 6px; }
+.contact-info { padding: 8px 16px; border-bottom: 1px solid var(--border); display: grid; gap: 6px; justify-items: start; }
+.contact-info .tag { font-size: 12px; padding: 5px 8px; white-space: normal; }
+.memo { margin: 0; font-size: 13px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.inline-form { padding: 10px 16px; border-bottom: 1px solid var(--border); display: grid; gap: 8px; background: var(--surface); }
+.inline-form label { display: grid; gap: 4px; font-size: 13px; }
+.inline-form textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+.form-actions { display: flex; gap: 8px; align-items: center; }
+.form-actions .spacer { flex: 1; }
+.pad-x { padding: 0 16px; }
+.pad-x:empty { display: none; }
+
+/* 定型文 */
+.template-panel { border-top: 1px solid var(--border); background: var(--surface); padding: 10px 16px; display: grid; gap: 8px; max-height: 45vh; overflow-y: auto; }
+.template-toolbar { display: flex; gap: 6px; align-items: center; }
+.template-toolbar input { flex: 1; min-width: 0; padding: 6px 10px; }
+.template-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.template-list li { display: flex; gap: 6px; align-items: stretch; }
+.template-list .use {
+  flex: 1; min-width: 0; text-align: left; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); padding: 6px 10px; display: grid; gap: 2px;
+}
+.template-list .use:hover { border-color: var(--accent); }
+.template-list .title { font-size: 13px; font-weight: 600; }
+.template-list .body { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.template-list .scope { font-weight: 400; font-size: 11px; color: var(--muted); margin-left: 6px; }
+.template-form { display: grid; gap: 8px; }
+.template-form label { display: grid; gap: 4px; font-size: 13px; }
+.template-form textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+button.danger { color: var(--error); border-color: var(--error); }
+.composer-actions #template-button { order: -1; }
+
+/* 画像・ファイル */
+.bubble.media { display: grid; gap: 6px; justify-items: start; }
+.media-title { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.media-note { font-size: 12px; color: var(--muted); }
+.media-error { font-size: 12px; }
+.media-image { max-width: min(280px, 100%); max-height: 280px; border-radius: 8px; cursor: zoom-in; background: var(--border); min-width: 60px; min-height: 40px; }
